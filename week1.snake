@@ -1,11 +1,17 @@
 import pandas
 
-sample_csv = pandas.read_csv('sample_sheet.csv', index_col='name')
-CONDITIONS = set(sample_csv['condition'].tolist())
-REPS = set(sample_csv['replicate'].tolist())
+sample_csv 		= pandas.read_csv('sample_sheet.csv', index_col='name')
+CONDITIONS 		= set(sample_csv['condition'].tolist())
+REPS 			= set(sample_csv['replicate'].tolist())
+FULL_SAMPLES	= expand('samples/{conditions}_{reps}.fastq.gz', condition = CONDITIONS, reps = REPS)
 
 rule all:
 	input:
+		## RULE ALL FOR RULE 'fastqc'
+		expand('results/qc/fastqc/{sample}_fastqc.html', sample = FULL_SAMPLES)
+
+		## RULE ALL FOR RULE 'wget_files'
+		# expand('samples/{sample}.fastq.gz', sample = FULL_SAMPLES)
 
 rule wget_files:
 	output:
@@ -17,7 +23,7 @@ rule wget_files:
 		'''
 		wget -O {params.renamed} {params.link} 
 		'''
-
+'''
 rule bowtie2_build_gencode:
 	input:
 	output:
@@ -26,16 +32,28 @@ rule bowtie2_build_gencode:
 	conda:
 		'envs/bowtie2_env.yml'
 	shell:
+'''
 
 rule fastqc:
-	input:
+	input: 
+		'samples/{fastq}.fastq.gz'
+
 	output:
-	params:
-	threads: 4
+		'results/qc/fastqc/{fastq}_fastqc.html',
+		'results/qc/fastqc/{fastq}_fastqc.zip'
+
 	conda:
 		'envs/fastqc_env.yml'
+	
+	threads: 4
 	shell:
+		'''
+		fastqc -o results/qc/fastqc {input} -t {threads}
+		'''
 
+
+
+'''
 rule trimomatic:
 	input:
 	output:
@@ -43,3 +61,4 @@ rule trimomatic:
 	conda:
 		'envs/trimmomatic_env.yml'
 	shell:
+'''
