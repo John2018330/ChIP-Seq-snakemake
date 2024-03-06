@@ -54,7 +54,6 @@ rule fastqc:
 		fastqc -o results/qc/fastqc {input} -t {threads}
 		'''
 
-'''
 rule trimomatic:
 	input:
 	output:
@@ -64,4 +63,3 @@ rule trimomatic:
 	shell:
 		'''
 		'''
-'''
