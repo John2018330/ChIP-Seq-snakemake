@@ -1,11 +1,16 @@
 import pandas
 
-sample_csv = pandas.read_csv('sample_sheet.csv', index_col='name')
-CONDITIONS = set(sample_csv['condition'].tolist())
-REPS = set(sample_csv['replicate'].tolist())
+sample_csv 		= pandas.read_csv('sample_sheet.csv', index_col='name')
+CONDITIONS 		= set(sample_csv['condition'].tolist())
+REPS 			= set(sample_csv['replicate'].tolist())
+SAMPLES_LIST 	= expand('{condition}_{rep}', condition=CONDITIONS, rep=REPS)
+
 
 rule all:
 	input:
+		#expand('samples/{condition}_{rep}.fastq.gz', condition=CONDITIONS, rep=REPS)
+		expand('samples/{sample}.fastq.gz', sample=SAMPLES_LIST)
+
 
 rule wget_files:
 	output:
@@ -26,6 +31,8 @@ rule bowtie2_build_gencode:
 	conda:
 		'envs/bowtie2_env.yml'
 	shell:
+		'''
+		'''
 
 rule fastqc:
 	input:
@@ -35,6 +42,8 @@ rule fastqc:
 	conda:
 		'envs/fastqc_env.yml'
 	shell:
+		'''
+		'''	
 
 rule trimomatic:
 	input:
@@ -43,3 +52,5 @@ rule trimomatic:
 	conda:
 		'envs/trimmomatic_env.yml'
 	shell:
+		'''
+		'''
