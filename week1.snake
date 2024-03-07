@@ -1,19 +1,37 @@
 import pandas
 
+################################################################
+########				SAMPLE VARIABLES		  		########
+################################################################
+#
+#	- A number of variables related to defining sample names
+#	- sample_csv points to a csv of select sample metadat, see 
+#     project description for details
+#	- SAMPLES_LIST contains list of sample names
+#
+################################################################
+
 sample_csv 		= pandas.read_csv('sample_sheet.csv', index_col='name')
 CONDITIONS 		= set(sample_csv['condition'].tolist())
 REPS 			= set(sample_csv['replicate'].tolist())
 SAMPLES_LIST 	= expand('{condition}_{rep}', condition=CONDITIONS, rep=REPS)
 
+
+
+### Insert rule all description
 rule all:
 	input:
+		## RULE ALL FOR RULE 'trimmomatic'
+		expand('results/trimmed/{sample}_trimmed.fastq.gz', sample = SAMPLES_LIST)
+
 		## RULE ALL FOR RULE 'fastqc'
-		expand('results/qc/fastqc/{sample}_fastqc.html', sample = SAMPLES_LIST)
+		#expand('results/qc/fastqc/{sample}_fastqc.html', sample = SAMPLES_LIST)
 
 		## RULE ALL FOR RULE 'wget_files'
 		# expand('samples/{sample}.fastq.gz', sample = FULL_SAMPLES)
 
 
+### Insert description of rule for downloading files
 rule wget_files:
 	output:
 		'samples/{condition}_{rep}.fastq.gz'
@@ -25,19 +43,24 @@ rule wget_files:
 		wget -O {params.renamed} {params.link} 
 		'''
 
-
+### Insert description of index building rule
 rule bowtie2_build_gencode:
+	threads: 16
+	conda: 'envs/bowtie2_env.yml'
+
 	input:
 	output:
+		
 	params:
-	threads: 16
-	conda:
-		'envs/bowtie2_env.yml'
 	shell:
 		'''
 		'''
 
+### Insert description of fastqc rule
 rule fastqc:
+	threads: 4
+	conda: 'envs/fastqc_env.yml'
+
 	input: 
 		'samples/{fastq}.fastq.gz'
 
@@ -45,21 +68,34 @@ rule fastqc:
 		'results/qc/fastqc/{fastq}_fastqc.html',
 		'results/qc/fastqc/{fastq}_fastqc.zip'
 
-	conda:
-		'envs/fastqc_env.yml'
-	
-	threads: 4
 	shell:
 		'''
 		fastqc -o results/qc/fastqc {input} -t {threads}
 		'''
 
-rule trimomatic:
+### Insert description of trimmomatic rule
+rule trimmomatic:
+	threads: 4
+	conda: 'envs/trimmomatic_env.yml'
+
 	input:
+		'samples/{sample}.fastq.gz'
+
 	output:
-	threads: 8
-	conda:
-		'envs/trimmomatic_env.yml'
+		'results/trimmed/{sample}_trimmed.fastq.gz'
+
+	params:
+		adapter_file	= '/projectnb/bf528/materials/project_2_chipseq/TruSeq3-SE.fa',
+		quality_score	= '-phred33'
+
 	shell:
 		'''
+		trimmomatic SE -threads {threads} \
+			{params.quality_score} \
+			{input} \
+			{output} \
+			ILLUMINACLIP:{params.adapter_file}:2:30:10 \
+			LEADING:3 \
+			TRAILING:3 \
+			SLIDINGWINDOW:4:15
 		'''
