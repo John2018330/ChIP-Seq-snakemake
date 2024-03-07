@@ -21,6 +21,9 @@ SAMPLES_LIST 	= expand('{condition}_{rep}', condition=CONDITIONS, rep=REPS)
 ### Insert rule all description
 rule all:
 	input:
+		## RULE ALL FOR RULE 'bowtie2_build_gencode'
+		'results/chr21_index',
+
 		## RULE ALL FOR RULE 'trimmomatic'
 		expand('results/trimmed/{sample}_trimmed.fastq.gz', sample = SAMPLES_LIST)
 
@@ -43,18 +46,27 @@ rule wget_files:
 		wget -O {params.renamed} {params.link} 
 		'''
 
+
 ### Insert description of index building rule
 rule bowtie2_build_gencode:
 	threads: 16
 	conda: 'envs/bowtie2_env.yml'
 
 	input:
+		'results/GRCh38.chr21.fa'
+
 	output:
-		
+		outdir = directory('results/chr21_index')
+
 	params:
+		index_name 	=	'chr21'
+
 	shell:
 		'''
+		mkdir -p {output.outdir}
+		bowtie2-build {input} {output.outdir}/{params.index_name} -p {threads}
 		'''
+
 
 ### Insert description of fastqc rule
 rule fastqc:
@@ -72,6 +84,7 @@ rule fastqc:
 		'''
 		fastqc -o results/qc/fastqc {input} -t {threads}
 		'''
+
 
 ### Insert description of trimmomatic rule
 rule trimmomatic:
