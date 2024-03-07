@@ -22,13 +22,13 @@ SAMPLES_LIST 	= expand('{condition}_{rep}', condition=CONDITIONS, rep=REPS)
 rule all:
 	input:
 		## RULE ALL FOR RULE 'bowtie2_build_gencode'
-		'results/chr21_index',
+		'results/grch38_index',
 
 		## RULE ALL FOR RULE 'trimmomatic'
-		expand('results/trimmed/{sample}_trimmed.fastq.gz', sample = SAMPLES_LIST)
+		expand('results/trimmed/{sample}_trimmed.fastq.gz', sample = SAMPLES_LIST),
 
 		## RULE ALL FOR RULE 'fastqc'
-		#expand('results/qc/fastqc/{sample}_fastqc.html', sample = SAMPLES_LIST)
+		expand('results/qc/fastqc/{sample}_fastqc.html', sample = SAMPLES_LIST)
 
 		## RULE ALL FOR RULE 'wget_files'
 		# expand('samples/{sample}.fastq.gz', sample = FULL_SAMPLES)
@@ -53,13 +53,13 @@ rule bowtie2_build_gencode:
 	conda: 'envs/bowtie2_env.yml'
 
 	input:
-		'results/GRCh38.chr21.fa'
+		'results/GRCh38.primary_assembly.genome.fa.gz'
 
 	output:
-		outdir = directory('results/chr21_index')
+		outdir = directory('results/grch38_index')
 
 	params:
-		index_name 	=	'chr21'
+		index_name 	=	'grch38'
 
 	shell:
 		'''
