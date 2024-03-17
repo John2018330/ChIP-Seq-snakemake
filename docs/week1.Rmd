@@ -6,7 +6,9 @@ date: '2024-03-01'
 
 Use this notebook to quickly write the methods for the week:
 
-
+Raw reads were inspected using FastQC (). 
+The raw reads were then quality controlled with Trimmomatic (0.39) using the arguments 'ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15'. 
+`Bowtie2-build` () was used to build a genome index for human genome GRCh38
 
 
 
