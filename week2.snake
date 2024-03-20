@@ -6,7 +6,6 @@ import pandas
 
 
 ## Variables that represent samples
-
 sample_csv 		= pandas.read_csv('sample_sheet.csv', index_col='name')
 CONDITIONS 		= set(sample_csv['condition'].tolist())
 REPS 			= set(sample_csv['replicate'].tolist())

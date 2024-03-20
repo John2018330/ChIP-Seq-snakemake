@@ -6,7 +6,10 @@ date: '2024-03-01'
 
 Use this notebook to quickly write the methods for the week:
 
-
+Bowtie2 (ref) was used to generate an index for the human genome reference (GRCh38).  
+Post trimmomatic raw reads were aligned to the reference using Bowtie2.
+Samtools flagstat (ref) was used to check for alignment quality, and MultiQC (ref) was used to generate an overall quality report combining samtools flagstat and FastQC reports
+Sorted and indexed BAM's generated from the alignment were converted into bigwig files to generate a clustered Heatmap for the four samples.
 
 
 
