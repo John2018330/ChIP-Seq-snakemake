@@ -1,56 +1,165 @@
+#!/usr/bin/env python3
+
+
+## Imports
+import pandas
+
+
+## Variables that represent samples
+
+sample_csv 		= pandas.read_csv('sample_sheet.csv', index_col='name')
+CONDITIONS 		= set(sample_csv['condition'].tolist())
+REPS 			= set(sample_csv['replicate'].tolist())
+SAMPLES_LIST 	        = expand('{condition}_{rep}', condition=CONDITIONS, rep=REPS)
+
+
 rule all:
-	input:
+    input:
+        # DEEPTOOLS PLOT CORRELATION BIGWIG HEATMAP
+        'results/bigwigs/heatmap.png',
+
+        # MULTIQC REPORT
+        'results/qc/multiqc_report.html',
+
+        # SAMTOOLS FLAGSTAT ALIGN STATS
+        expand('results/bowtie_aligned/{sample}.stats', sample=SAMPLES_LIST)
+
+        # BOWTIE2 ALIGN RULE ALL
+        # expand('results/bowtie_aligned/{sample}.bam', sample=SAMPLES_LIST),
+
+        # SAMTOOLS IDX INPLACE
+        #expand('results/bowtie_aligned/{sample}_samtools_idx.done', sample=SAMPLES_LIST),
+
 
 rule bowtie2_align:
-	input:
-	output:
-	threads: 16
-	params:
-	conda:
-		'envs/bowtie2_env.yml'
-	shell:
+    threads: 16
+    conda: 'envs/bowtie2_env.yml'
 
-rule samtools_sort:
-	input:
-	output:
-	conda:
-		'envs/samtools_env.yml'
-	shell:
+    input:
+        fastq       = 'results/trimmed/{sample}_trimmed.fastq.gz'
 
-rule samtools_idx:
-	input:
-	output:
-	conda:
-		'envs/samtools_env.yml'
-	shell:
+    output:
+        bam         = 'results/bowtie_aligned/{sample}.bam'
+
+    params:
+        index	    = 'results/grch38_index/grch38',
+        log_file    = 'results/bowtie_aligned/{sample}.log'
+
+    shell:
+        '''
+        bowtie2 -p {threads} -x {params.index} -U {input.fastq} 2> {params.log_file} | samtools view -bS - > {output.bam}
+        '''
+
+
+
+rule samtools_flagstats:
+    conda: 'envs/samtools_env.yml'
+
+    input:
+        bam         = 'results/bowtie_aligned/{sample}.bam'
+
+    output:
+        flagstat    = 'results/bowtie_aligned/{sample}.stats'
+
+    shell:
+        '''
+        samtools flagstats {input} > {output}
+        '''
 
 rule multiqc:
-	input:
-	output:
-	params:
-	conda:
-		'envs/multiqc_env.yml'
-	shell:
+    conda: 'envs/multiqc_env.yml'
+
+    input:
+        fastqc_reports  = expand('results/qc/fastqc/{sample}_fastqc.zip', sample=SAMPLES_LIST),
+        flagstats       = expand('results/bowtie_aligned/{sample}.stats', sample=SAMPLES_LIST)
+
+    output:
+        concat_repot    = 'results/qc/multiqc_report.html'
+
+    shell:
+        '''
+        multiqc {input.fastqc_reports} {input.flagstats} -o results/qc/ -f
+        '''
+
+
+
+rule samtools_sort:
+    conda: 'envs/samtools_env.yml'
+
+    input:
+        bam         = 'results/bowtie_aligned/{sample}.bam'
+
+    output:
+        sorted_bam  = 'results/bowtie_aligned/{sample}_sorted.bam'
+
+    shell:
+        '''
+        samtools sort {input.bam} -o {output.sorted_bam}
+        '''
+
+rule samtools_idx:
+    conda: 'envs/samtools_env.yml'
+
+    input:
+        sorted_bam      = 'results/bowtie_aligned/{sample}_sorted.bam'
+
+    output:
+        # bam_index       = 'results/bowtie_aligned/{sample}_sorted.bai',
+        touch('results/bowtie_aligned/{sample}_samtools_idx.done')
+
+    shell:
+        '''
+        samtools index {input.sorted_bam} 
+        '''
+
+
 
 rule bamCoverage:
-	input:
-	output:
-	threads: 4
-	conda:
-		'envs/deeptools_env.yml'
-	shell:
+    threads: 4
+    conda: 'envs/deeptools_env.yml'
+
+    input:
+        bam             = 'results/bowtie_aligned/{sample}_sorted.bam',
+        index_status    = 'results/bowtie_aligned/{sample}_samtools_idx.done'
+    
+    output:
+        bigwig          = 'results/bigwigs/{sample}.bw'	
+
+    shell:
+        '''
+        bamCoverage -b {input.bam} -o {output.bigwig} -of 'bigwig'
+        '''
 
 rule multiBwSummary:
-	input:
-	output:
-	conda:
-		'envs/deeptools_env.yml'
-	shell:
+    conda: 'envs/deeptools_env.yml'
+
+    input:
+        bigwigs         = expand('results/bigwigs/{sample}.bw', sample=SAMPLES_LIST )
+
+    output:
+        numpy_array     = 'results/bigwigs/matrix.npz'
+
+    shell:
+        '''
+        multiBigwigSummary bins -b {input.bigwigs} -o {output.numpy_array}
+        '''
 
 rule plotCorrelation:
-	input:
-	output:
-	params:
-	conda:
-		'envs/deeptools_env.yml'
-	shell:
+    conda: 'envs/deeptools_env.yml'
+
+    input:
+        matrix          = 'results/bigwigs/matrix.npz'
+
+    output:
+        plot            = 'results/bigwigs/heatmap.png'
+
+    params:
+        correlation     = 'spearman',
+        plottype        = 'heatmap'
+
+    shell:
+        '''
+        plotCorrelation -in {input.matrix} -c {params.correlation} -p {params.plottype} -o {output.plot}
+        '''
+
+
