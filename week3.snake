@@ -1,62 +1,104 @@
+#!/usr/bin/env python3
+
+import pandas
+
+
+## Variables that represent samples
+sample_csv 		= pandas.read_csv('sample_sheet.csv', index_col='name')
+CONDITIONS 		= set(sample_csv['condition'].tolist())
+REPS 			= set(sample_csv['replicate'].tolist())
+SAMPLES_LIST 	        = expand('{condition}_{rep}', condition=CONDITIONS, rep=REPS)
+
+
+
 rule all:
-	input:
+    input:
+        # RULE ALL FOR FINDPEAKS
+        expand('results/tagdirs/RUNX1_{rep}_tag_dir/peaks.txt', rep=REPS)
+
+        # RULE ALL FOR MAKE TAG DIR
+        #expand('results/tagdirs/{sample}_tag_dir', sample=SAMPLES_LIST)
+
+
 
 rule make_tag_dir:
-	input:
-	output:
-	params:
-	conda:
-		'envs/homer_env.yml'
-	shell:
+    conda: 'envs/homer_env.yml'
+
+    input:
+        bam     = 'results/bowtie_aligned/{sample}_sorted.bam'
+        
+    output:
+        done    = touch('results/tagdirs/{sample}_make_tag_dir.done')
+
+    params:
+        outdir  = directory('results/tagdirs/{sample}_tag_dir')
+
+    shell:
+        '''
+        makeTagDirectory {params.outdir} {input.bam} 
+        '''
+
 
 rule findPeaks:
-	input:
-	output:
-	conda:
-		'envs/homer_env.yml'
-	shell:
+    conda: 'envs/homer_env.yml'
 
-rule convertPeakFiles:
-	input:
-	output:
-	conda:
-		'envs/homer_env.yml'
-	shell:
+    input:
+        runx1_done          = 'results/tagdirs/RUNX1_{rep}_make_tag_dir.done',
+        inp_done            = 'results/tagdirs/INP_{rep}_make_tag_dir.done'
 
-rule intersect_peaks:
-	input:
-	output:
-	conda:
-		'envs/bedtools_env.yml'
-	shell:
+    output:
+        peaks               = 'results/tagdirs/RUNX1_{rep}_tag_dir/peaks.txt'
 
-rule filter_blacklist:
-	input:
-	output:
-	conda:
-		'envs/bedtools_env.yml'
-	shell:
+    params:
+        tagdir              = 'results/tagdirs/RUNX1_{rep}_tag_dir',
+        control_tagdir      = 'results/tagdirs/INP_{rep}_tag_dir'
 
-rule unzip_gtf:
-	input:
-	output:
-	shell:
+    shell:
+        '''
+        findPeaks {params.tagdir} -style factor -o auto i- {params.control_tagdir}
+        '''
 
-rule annotate_peaks:
-	input:
-	output:
-	conda:
-		'envs/homer_env.yml'
-	shell:
-
-rule unzip_genome:
-	input:
-	output:
-	shell:
-
-rule motifs:
-	input:
-	output:
-	conda:
-		'envs/homer_env.yml'
-	shell:
+#rule convertPeakFiles:
+#	input:
+#	output:
+#	conda:
+#		'envs/homer_env.yml'
+#	shell:
+#
+#rule intersect_peaks:
+#	input:
+#	output:
+#	conda:
+#		'envs/bedtools_env.yml'
+#	shell:
+#
+#rule filter_blacklist:
+#	input:
+#	output:
+#	conda:
+#		'envs/bedtools_env.yml'
+#	shell:
+#
+#rule unzip_gtf:
+#	input:
+#	output:
+#	shell:
+#
+#rule annotate_peaks:
+#	input:
+#	output:
+#	conda:
+#		'envs/homer_env.yml'
+#	shell:
+#
+#rule unzip_genome:
+#	input:
+#	output:
+#	shell:
+#
+#rule motifs:
+#	input:
+#	output:
+#	conda:
+#		'envs/homer_env.yml'
+#	shell:
