@@ -18,7 +18,7 @@ rule all:
         'results/bigwigs/heatmap.png',
 
         # MULTIQC REPORT
-      'results/qc/multiqc_report.html'
+        'results/qc/multiqc_report.html'
 
       # SAMTOOLS FLAGSTAT ALIGN STATS
       # expand('results/bowtie_aligned/{sample}.stats', sample=SAMPLES_LIST)
@@ -155,12 +155,12 @@ rule plotCorrelation:
         plot            = 'results/bigwigs/heatmap.png'
 
     params:
-        correlation     = 'spearman',
+        correlation     = 'pearson',
         plottype        = 'heatmap'
 
     shell:
         '''
-        plotCorrelation -in {input.matrix} -c {params.correlation} -p {params.plottype} -o {output.plot}
+        plotCorrelation -in {input.matrix} -c {params.correlation} -p {params.plottype} --plotFile {output.plot} --plotNumbers --skipZeros
         '''
 
 
