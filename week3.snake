@@ -13,11 +13,8 @@ SAMPLES_LIST 	        = expand('{condition}_{rep}', condition=CONDITIONS, rep=RE
 
 rule all:
     input:
-        # RULE ALL FOR FINDPEAKS
-        expand('results/tagdirs/RUNX1_{rep}_tag_dir/peaks.txt', rep=REPS)
+        'results/motif/homer_motifs.done'
 
-        # RULE ALL FOR MAKE TAG DIR
-        #expand('results/tagdirs/{sample}_tag_dir', sample=SAMPLES_LIST)
 
 
 
@@ -55,50 +52,115 @@ rule findPeaks:
 
     shell:
         '''
-        findPeaks {params.tagdir} -style factor -o auto i- {params.control_tagdir}
+        findPeaks {params.tagdir} -style factor -o auto -i {params.control_tagdir}
         '''
 
-#rule convertPeakFiles:
-#	input:
-#	output:
-#	conda:
-#		'envs/homer_env.yml'
-#	shell:
-#
-#rule intersect_peaks:
-#	input:
-#	output:
-#	conda:
-#		'envs/bedtools_env.yml'
-#	shell:
-#
-#rule filter_blacklist:
-#	input:
-#	output:
-#	conda:
-#		'envs/bedtools_env.yml'
-#	shell:
-#
-#rule unzip_gtf:
-#	input:
-#	output:
-#	shell:
-#
-#rule annotate_peaks:
-#	input:
-#	output:
-#	conda:
-#		'envs/homer_env.yml'
-#	shell:
-#
-#rule unzip_genome:
-#	input:
-#	output:
-#	shell:
-#
-#rule motifs:
-#	input:
-#	output:
-#	conda:
-#		'envs/homer_env.yml'
-#	shell:
+rule convertPeakFiles:
+    conda: 'envs/homer_env.yml'
+    
+    input:
+        peaks       = 'results/tagdirs/RUNX1_{rep}_tag_dir/peaks.txt'
+
+    output:
+        bedfile     = 'results/RUNX1_{rep}.bed'
+
+    shell:
+        '''
+        pos2bed.pl {input.peaks} > {output.bedfile}
+        '''
+
+rule intersect_peaks:
+    conda: 'envs/bedtools_env.yml'
+
+    input:
+        rep1        = 'results/RUNX1_rep1.bed',
+        rep2        = 'results/RUNX1_rep2.bed'
+
+    output:
+        intersect   = 'results/RUNX1.bed'
+
+    shell:
+        '''
+        bedtools intersect -a {input.rep1} -b {input.rep2} > {output.intersect}
+        '''
+
+rule filter_blacklist:
+    conda: 'envs/bedtools_env.yml'
+    
+    input:
+        runx1               = 'results/RUNX1.bed',
+        blacklist           = 'results/hg38-blacklist.v2.bed'
+
+    output:
+        intersect_filtered  = 'results/RUNX1_noBlacklist.bed'
+
+    shell:
+        '''
+        bedtools intersect -a {input.runx1} -b {input.blacklist} -v > {output.intersect_filtered}
+        '''
+
+rule unzip_gtf:
+    input:
+        zipped      = 'results/gencode.v45.primary_assembly.annotation.gtf.gz'
+
+    output:
+        unzipped    = 'results/gencode.v45.primary_assembly.annotation.gtf' 
+
+    shell:
+        '''
+        gzip -d {input.zipped}
+        '''
+
+rule unzip_genome:
+    input:
+        zipped      = 'results/GRCh38.primary_assembly.genome.fa.gz'
+        
+    output:
+        unzipped    = 'results/GRCh38.primary_assembly.genome.fa'
+        
+    shell:
+        '''
+        gzip -d {input.zipped}
+        '''
+
+
+
+rule annotate_peaks:
+    conda: 'envs/homer_env.yml'
+
+    input:
+        bed     = 'results/RUNX1_noBlacklist.bed',
+        gtf     = 'results/gencode.v45.primary_assembly.annotation.gtf',
+        genome  = 'results/GRCh38.primary_assembly.genome.fa'
+
+    output:
+        txt     = 'results/RUNX1_noBlacklist_annotated.txt'
+
+    shell:
+        '''
+        annotatePeaks.pl {input.bed} {input.genome} -gtf {input.gtf} > {output.txt}
+        '''
+
+rule motifs:
+    threads: 8
+    conda: 'envs/homer_env.yml'
+
+    input:
+        peaks   = 'results/RUNX1_noBlacklist_annotated.txt',
+        genome  = 'results/GRCh38.primary_assembly.genome.fa'
+
+    output:
+        touch('results/motif/homer_motifs.done')
+    
+    params:
+        outdir  = 'results/motif'
+
+    shell:
+        '''
+        findMotifsGenome.pl {input.peaks} {input.genome} {params.outdir} -size 200 -p {threads}
+        '''
+
+
+
+
+
