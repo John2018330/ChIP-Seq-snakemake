@@ -6,7 +6,13 @@ date: '2024-03-01'
 
 Use this notebook to quickly write the methods for the week:
 
-
+HOMER [4.11](http://homer.ucsd.edu/homer/) was the primary software used for peak calling.
+For each repliate of RUNX1 immunoprecipitation, HOMER `findPeaks` was used in conjunction with the non-enrichment sample (INP) with flags `-style factor -o auto`.
+HOMER `pos2bed` was used to turn the outputted peaks file to bed format.
+Bedtools [2.31.1](https://bedtools.readthedocs.io/en/latest/) interesect was first used with default flags to generate a list of reproducible peaks across the two RUNX1 replicates.
+It was then used in conjunction with a file containing blacklisted regions with flag `-v` to remove known signal-artifact regions from the list of reproducible peaks.
+HOMER `annotatePeaks.pl` was used to annotate peaks by providing both the GRCh38 primary assembly human genome and corresponding annotation gtf file.
+HOMER `findMotifsGenome.pl` was used to perform motif enrichment analysis with default parameters.
 
 
 
