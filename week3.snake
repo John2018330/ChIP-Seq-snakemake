@@ -79,6 +79,7 @@ rule intersect_peaks:
     output:
         intersect   = 'results/RUNX1.bed'
 
+    # consider using -r flag
     shell:
         '''
         bedtools intersect -a {input.rep1} -b {input.rep2} > {output.intersect}
@@ -156,6 +157,7 @@ rule motifs:
         outdir  = 'results/motif'
 
     shell:
+        #-mask
         '''
         findMotifsGenome.pl {input.peaks} {input.genome} {params.outdir} -size 200 -p {threads}
         '''
