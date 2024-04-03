@@ -1,18 +1,54 @@
+#!/usr/bin/env python3
+
+import pandas
+
+## Variables that represent samples
+sample_csv 		= pandas.read_csv('sample_sheet.csv', index_col='name')
+CONDITIONS 		= set(sample_csv['condition'].tolist())
+REPS 			= set(sample_csv['replicate'].tolist())
+SAMPLES_LIST 	        = expand('{condition}_{rep}', condition=CONDITIONS, rep=REPS)
+
+
 rule all:
-	input:
+    input:
+        expand('results/peaks_vis/RUNX1_{rep}_heatmap.png', rep=REPS)
+
+        ## RULE ALL FOR COMPUTE MATRIX
+        ##expand('results/peaks_vis/RUNX1_{rep}_matrix.gz', rep=REPS)
+
 
 rule computeMatrix:
-	input:
-	output:
-	params:
-	conda:
-		'envs/deeptools_env.yml'
-	threads: 4
-	shell:
+    conda:  'envs/deeptools_env.yml'
+    threads: 4
+
+    input:
+        bigwig      = 'results/bigwigs/RUNX1_{rep}.bw'
+
+    output:
+        matrix      = 'results/peaks_vis/RUNX1_{rep}_matrix.gz'
+
+    params:
+        spread      = '2000',
+        hg19_genes  = 'results/hg38_genes.bed'
+
+    shell:
+        '''
+        computeMatrix scale-regions -S {input.bigwig} -R {params.hg19_genes} \
+                -b {params.spread} -a {params.spread} \
+                -o {output.matrix} 
+        '''
+
 
 rule plotMatrix:
-	input:
-	output:
-	conda:
-		'envs/deeptools_env.yml'
-	shell:
+    conda:  'envs/deeptools_env.yml'
+
+    input:
+        matrix      = 'results/peaks_vis/RUNX1_{rep}_matrix.gz'
+
+    output:
+        plot        = 'results/peaks_vis/RUNX1_{rep}_heatmap.png'
+
+    shell:
+        '''
+        plotProfile -m {input.matrix} -o {output.plot}
+        '''
