@@ -21,4 +21,4 @@
 !/refs/*.png
 !/docs/
 !/docs.*Rmd
-!/docs.*R
+!/docs/fig2.R
