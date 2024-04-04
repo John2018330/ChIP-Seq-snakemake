@@ -21,3 +21,4 @@
 !/refs/*.png
 !/docs/
 !/docs.*Rmd
+!/docs.*R

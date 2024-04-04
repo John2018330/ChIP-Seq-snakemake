@@ -15,7 +15,5 @@ HOMER `annotatePeaks.pl` was used to annotate peaks by providing both the GRCh38
 HOMER `findMotifsGenome.pl` was used to perform motif enrichment analysis with default parameters.
 
 
-
-
 If asked, you may also include any plots or figures in this notebook as well:
 
