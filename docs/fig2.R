@@ -3,12 +3,12 @@
 library(tidyverse)
 library(scales)
 
-deseq_results <- read_tsv('../results/GSE75070_MCF7_shRUNX1_shNS_RNAseq_log2_foldchange.txt')
+deseq_results <- read_tsv('results/GSE75070_MCF7_shRUNX1_shNS_RNAseq_log2_foldchange.txt')
 
 filtered_deseq <- deseq_results %>%
   filter(abs(log2FoldChange) > 1 & padj < 0.01)
 
-annotated_peaks <- read_tsv('../results/RUNX1_noBlacklist_annotated.txt')
+annotated_peaks <- read_tsv('results/RUNX1_noBlacklist_annotated.txt')
 
 fig2f_data <- filtered_deseq %>%
   left_join(y=annotated_peaks, by = c('genename' = 'Gene Name')) %>%
