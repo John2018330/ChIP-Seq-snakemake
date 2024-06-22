@@ -9,6 +9,7 @@
 !*.MD
 !*.yml
 !*.py
+!*.html
 
 # allow the ymls in envs/
 !/envs/
