@@ -22,4 +22,5 @@
 !/docs/
 !/docs.*Rmd
 !/docs/fig2.R
+!/report/
 .Rproj.user
