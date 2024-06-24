@@ -8,6 +8,16 @@ This project uses Chromatin Immunoprecipitation sequencing data targetting the R
 The sequencing data is pushed through a Snakemake workflow for processing and exploratory analyses.
 Results can be found in the report folder.
 
+### Software
+- [bowtie 2.5.3](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
+- [samtools 1.19.2](https://www.htslib.org/)
+- [FastQC 0.12.1-0](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+- [Trimmomatic 0.39](http://www.usadellab.org/cms/?page=trimmomatic)
+- [MultiQC 1.20](https://multiqc.info/)
+- [DeepTools 3.5.4](https://deeptools.readthedocs.io/en/develop/)
+- [HOMER 4.11](http://homer.ucsd.edu/homer/motif/) for motif analysis
+- [BedTools 2.31.1](https://bedtools.readthedocs.io/en/latest/)
+
 ## Methods
 Raw sequencing reads can be obtained via GEO Accession [GSE75070](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75070).
 Raw sequencing reads were first inspected for quality assessment using [FastQC v0.12.1](https://qubeshub.org/resources/fastqc).
